@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
-import codecs
-import csv
 import re
 
-import requests
-from lxml import etree
-from scrapy import Spider,FormRequest
+from scrapy import Spider, FormRequest,Request
 
 from weibo_02.items import weibo_user_data
 
@@ -15,23 +11,13 @@ class ExampleSpider(Spider):
                     ""}  # 换成自己的cookie
     name = 'weibo'
     allowed_domains = ['weibo.cn']
-    user_id = 1403620503
+    user_id = 2443765844
     URL = 'https://weibo.cn/u/%d?filter=1'% (user_id)
-    url_page = []
-    title= ''
-    following = 0
-    follows = 0
-    mp = 0
-    Certification = False
-    weibo_num =  0
-    repost_num = 0
+
     def start_requests(self):
         yield FormRequest(self.URL,callback=self.call_index)
 
     def call_index(self, response):
-        # fh = codecs.open( "2211781230.html", "w", "UTF-8")
-        # fh.write(response.text)
-        # fh.close()
         Usr_id = self.user_id
         Usr_Certification = False
         Usr_name = response.xpath("/html/head/title/text()").extract()[0][:-3]
@@ -39,32 +25,47 @@ class ExampleSpider(Spider):
         for cf_ in cf:
             if '认证：' in cf_:
                 Usr_Certification =True
-        Usr_follows = response.xpath("//div[@class='tip2']/a[1]/text()").extract()[0][3:-1]
-        Usr_fans = response.xpath("//div[@class='tip2']/a[2]/text()").extract()[0][3:-1]
-        Usr_mp = response.xpath("//input[@name='mp']")[0].attrib["value"]
-        print(Usr_mp)
+        Usr_follows = int(response.xpath("//div[@class='tip2']/a[1]/text()").extract()[0][3:-1])
+        Usr_fans =int( response.xpath("//div[@class='tip2']/a[2]/text()").extract()[0][3:-1])
+        Usr_mp = int (response.xpath("//input[@name='mp']")[0].attrib["value"])
+        Usr_weibo_num = 0  # 两年内的原创数
+        Usr_repost_num = 0  # 两年内的转发数
+
+        # for page in range(int(Usr_mp)):
+        #     yield FormRequest("https://weibo.cn/u/%d?filter=1&page=%d" % (self.user_id, page+1),
+        #                       callback=self.get_weibo_num)
         weibo_item = weibo_user_data()
         for field in weibo_item.fields:
-            weibo_item[field] = eval(field)
+            try:
+                weibo_item[field] = eval(field)
+            except NameError:
+                pass
+        for page in range(Usr_mp):
+            yield Request("https://weibo.cn/u/%d?filter=1&page=%d" % (self.user_id, page+1),callback=self.get_weibo_num,meta={"weibo_item":weibo_item})
+            print("https://weibo.cn/u/%d?filter=1&page=%d" % (self.user_id, 1))
 
-        yield weibo_item
-        # for page in range(int(Usr_mp)):
-            # self.url_page.append("https://weibo.cn/u/%d?filter=1&page=%d" % ( self.user_id, page + 1))
 
-        # yield FormRequest("https://weibo.cn/u/%d?filter=1&page=%d" % (self.user_id,13),
-        #                   callback=self.get_weibo_num)
 
     def get_weibo_num(self,response):
+        weibo_item = response.meta["weibo_item"]
 
         div = response.xpath('//div[contains(@id,"M_")]/div[last()]/span[@class="ct"]/text()').extract()
         num = response.xpath('//div[contains(@id,"M_")]/div[last()]/a[contains(@href,"https://weibo.cn/repost/")]/text()'
                              ).extract()
-        for div_ in num:
-            if '-(.*?)-' in div_:
-                print(div_)
+
+        for div_ in range(len(div)):
+            a = "".join(div[div_].split())
+            if '-'in a:
+                date = re.findall('(.*?)-(.*?)-',a)
+                if (int(date[0][0]) <= 2017) and (int(date[0][1]) < 3):
+                    pass
+                else:
+                    weibo_item['Usr_weibo_num'] += 1
+                    weibo_item['Usr_repost_num'] += int(num[div_][3:-1])
             else:
-                print(div_)
+                weibo_item['Usr_weibo_num'] += 1
+                weibo_item['Usr_repost_num'] += int(num[div_][3:-1])
                 # self.repost_num += int (num[div_][3:-1])
                 # self.weibo_num += 1
 
-
+        yield weibo_item
