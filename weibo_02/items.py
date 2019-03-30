@@ -8,10 +8,6 @@
 from scrapy import Field, Item
 
 
-class Weibo02Item(Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
 class weibo_user_data(Item):
     Usr_name = Field() #用户名字
     Usr_id = Field() #用户ID

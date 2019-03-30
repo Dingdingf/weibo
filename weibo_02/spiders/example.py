@@ -7,13 +7,15 @@ import requests
 from lxml import etree
 from scrapy import Spider,FormRequest
 
+from weibo_02.items import weibo_user_data
+
 
 class ExampleSpider(Spider):
     myHeader = {"Cookie":
                     ""}  # 换成自己的cookie
     name = 'weibo'
     allowed_domains = ['weibo.cn']
-    user_id = 3217179555
+    user_id = 1403620503
     URL = 'https://weibo.cn/u/%d?filter=1'% (user_id)
     url_page = []
     title= ''
@@ -30,9 +32,9 @@ class ExampleSpider(Spider):
         # fh = codecs.open( "2211781230.html", "w", "UTF-8")
         # fh.write(response.text)
         # fh.close()
-        Usr_id = 3217179555
+        Usr_id = self.user_id
         Usr_Certification = False
-        Usr_name = response.xpath("/html/head/title/text()").extract()[0]
+        Usr_name = response.xpath("/html/head/title/text()").extract()[0][:-3]
         cf = response.xpath('//div[@class="ut"]/span[@class="ctt"]/text()').extract()
         for cf_ in cf:
             if '认证：' in cf_:
@@ -40,6 +42,12 @@ class ExampleSpider(Spider):
         Usr_follows = response.xpath("//div[@class='tip2']/a[1]/text()").extract()[0][3:-1]
         Usr_fans = response.xpath("//div[@class='tip2']/a[2]/text()").extract()[0][3:-1]
         Usr_mp = response.xpath("//input[@name='mp']")[0].attrib["value"]
+        print(Usr_mp)
+        weibo_item = weibo_user_data()
+        for field in weibo_item.fields:
+            weibo_item[field] = eval(field)
+
+        yield weibo_item
         # for page in range(int(Usr_mp)):
             # self.url_page.append("https://weibo.cn/u/%d?filter=1&page=%d" % ( self.user_id, page + 1))
 

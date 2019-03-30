@@ -76,9 +76,10 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'weibo_02.pipelines.Weibo02Pipeline': 300,
-#}
+ITEM_PIPELINES = {
+    'weibo_02.pipelines.RedisClient': 300,
+    'weibo_02.pipelines.weibo_iteam': 301,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://doc.scrapy.org/en/latest/topics/autothrottle.html
