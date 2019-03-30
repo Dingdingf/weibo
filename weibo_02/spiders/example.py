@@ -4,24 +4,29 @@ import re
 from scrapy import Spider, FormRequest, Request
 
 from weibo_02.items import weibo_user_data
+from weibo_02.settings import FAND_UID, REDIS_WEBSIT, REDIS_TYPE, REDIS_DB
 
 
 class ExampleSpider(Spider):
 
     name = 'weibo'
     allowed_domains = ['weibo.cn']
-    user_id = 2443765844
-    URL = 'https://weibo.cn/u/%d?filter=1'% (user_id)
-    url_ = 'https://weibo.cn/pub/topmblog'
+    """
+        top_url  主页地址
+    """
+    top_url = 'https://weibo.cn/pub/topmblog'
     def start_requests(self):
         from weibo_02.spiders.Rides_tool import Redis_tool
-        self.db = Redis_tool(1)
-        self.db.set_type_website('weibo','id')
-        yield FormRequest(self.url_,callback=self.get_id)
-
+        self.db = Redis_tool(REDIS_DB)
+        self.db.set_type_website(REDIS_TYPE,REDIS_WEBSIT)
+        if FAND_UID :
+            yield FormRequest(self.top_url,callback=self.get_id)
+        else:
+            self.uid_list =self.db.usernames()
+            for uid in self.uid_list:
+                url = 'https://weibo.cn/u/%d?filter=1'% (int(uid))
+                yield FormRequest(url, callback=self.call_index,meta={"uid":int(uid)})
     def get_id(self,response):
-        self.uid_list =[]
-        self.follow_urls = []
         urls = response.xpath('//div[contains(@id,"M_")]/div/a[@class="nk"]/@href').extract()
         for url in urls:
             yield Request(url,callback=self.get_id_next)
@@ -47,7 +52,7 @@ class ExampleSpider(Spider):
             self.db.set_data(uid[0], 0)
 
     def call_index(self, response):
-        Usr_id = self.user_id
+        Usr_id = response.meta["uid"]
         Usr_Certification = False
         Usr_name = response.xpath("/html/head/title/text()").extract()[0][:-3]
         cf = response.xpath('//div[@class="ut"]/span[@class="ctt"]/text()').extract()
@@ -67,8 +72,7 @@ class ExampleSpider(Spider):
             except NameError:
                 pass
         for page in range(Usr_mp):
-            yield Request("https://weibo.cn/u/%d?filter=1&page=%d" % (self.user_id, page+1),callback=self.get_weibo_num,meta={"weibo_item":weibo_item})
-            print("https://weibo.cn/u/%d?filter=1&page=%d" % (self.user_id, 1))
+            yield Request("https://weibo.cn/u/%d?filter=1&page=%d" % (Usr_id ,page+1),callback=self.get_weibo_num,meta={"weibo_item":weibo_item})
 
 
 
@@ -91,7 +95,5 @@ class ExampleSpider(Spider):
             else:
                 weibo_item['Usr_weibo_num'] += 1
                 weibo_item['Usr_repost_num'] += int(num[div_][3:-1])
-                # self.repost_num += int (num[div_][3:-1])
-                # self.weibo_num += 1
-
+          
         yield weibo_item

@@ -7,6 +7,8 @@
 import redis
 from numpy import random
 
+from weibo_02.settings import REDIS_TYPE, REDIS_WEBSIT, REDIS_DB
+
 
 class weibo_iteam(object):
     def process_item(self, item, spider):
@@ -16,9 +18,9 @@ class weibo_iteam(object):
 class RedisClient(object):
     def open_spider(self,spider):
         try:
-            self.db = redis.StrictRedis(host="127.0.0.1",db=1, port=6379, password="", decode_responses=True)
-            self.type = "usr_data"
-            self.website = "weibo"
+            self.db = redis.StrictRedis(host="127.0.0.1",db=REDIS_DB, port=6379, password="", decode_responses=True)
+            self.type = REDIS_TYPE
+            self.website = REDIS_WEBSIT
         except Exception as e:
             print('Failed to Get Redis!')
             exit(1)

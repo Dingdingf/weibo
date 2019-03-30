@@ -107,3 +107,8 @@ COOKIES_POOL_URL= 'http://127.0.0.1:5020/weibo/random'
 REDIS_HOST = '127.0.0.1'
 REDIS_PORT = 6379
 REDIS_PASSWORD = ''     #无密码留空
+REDIS_DB = 1
+REDIS_TYPE = 'udi'
+REDIS_WEBSIT = 'data'
+#切换模式
+FAND_UID = False
