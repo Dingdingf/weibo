@@ -7,15 +7,44 @@ from weibo_02.items import weibo_user_data
 
 
 class ExampleSpider(Spider):
-    myHeader = {"Cookie":
-                    ""}  # 换成自己的cookie
+
     name = 'weibo'
     allowed_domains = ['weibo.cn']
     user_id = 2443765844
     URL = 'https://weibo.cn/u/%d?filter=1'% (user_id)
-
+    url_ = 'https://weibo.cn/pub/topmblog'
     def start_requests(self):
-        yield FormRequest(self.URL,callback=self.call_index)
+        from weibo_02.spiders.Rides_tool import Redis_tool
+        self.db = Redis_tool(1)
+        self.db.set_type_website('weibo','id')
+        yield FormRequest(self.url_,callback=self.get_id)
+
+    def get_id(self,response):
+        self.uid_list =[]
+        self.follow_urls = []
+        urls = response.xpath('//div[contains(@id,"M_")]/div/a[@class="nk"]/@href').extract()
+        for url in urls:
+            yield Request(url,callback=self.get_id_next)
+
+    def get_id_next(self,response):
+        urls =response.xpath("//div[@class='tip2']/a[contains(@href,'/follow')]/@href").extract()
+        mp = response.xpath("//input[@name='mp']")[0].attrib["value"]
+
+        for url in urls:
+            uid = re.findall('/(.*?)/',url)
+            self.db.set_data(uid[0],0)
+            # print('https://weibo.cn'+url)
+            for page in range(5):
+                data = {
+                    'mp':mp,
+                    'page':str(page)
+                }
+                yield FormRequest(url="https://weibo.cn"+url,callback=self.get_follow_id,formdata=data)
+    def get_follow_id(self,response):
+        urls = response.xpath('//a[contains(@href,"cn/u/")]/@href').extract()
+        for url in urls:
+            uid = re.findall('u/(.*?)$', url)
+            self.db.set_data(uid[0], 0)
 
     def call_index(self, response):
         Usr_id = self.user_id
@@ -31,9 +60,6 @@ class ExampleSpider(Spider):
         Usr_weibo_num = 0  # 两年内的原创数
         Usr_repost_num = 0  # 两年内的转发数
 
-        # for page in range(int(Usr_mp)):
-        #     yield FormRequest("https://weibo.cn/u/%d?filter=1&page=%d" % (self.user_id, page+1),
-        #                       callback=self.get_weibo_num)
         weibo_item = weibo_user_data()
         for field in weibo_item.fields:
             try:
