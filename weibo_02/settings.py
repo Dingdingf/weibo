@@ -102,3 +102,8 @@ ITEM_PIPELINES = {
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 COOKIES_POOL_URL= 'http://127.0.0.1:5020/weibo/random'
+
+#rides_数据库地址，端口，密码。
+REDIS_HOST = '127.0.0.1'
+REDIS_PORT = 6379
+REDIS_PASSWORD = ''     #无密码留空

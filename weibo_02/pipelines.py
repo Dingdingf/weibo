@@ -16,7 +16,7 @@ class weibo_iteam(object):
 class RedisClient(object):
     def open_spider(self,spider):
         try:
-            self.db = redis.StrictRedis(host="127.0.0.1", port=6379, password="", decode_responses=True)
+            self.db = redis.StrictRedis(host="127.0.0.1",db=1, port=6379, password="", decode_responses=True)
             self.type = "usr_data"
             self.website = "weibo"
         except Exception as e:
