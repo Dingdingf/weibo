@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 
-from scrapy import Spider, FormRequest,Request
+from scrapy import Spider, FormRequest, Request
 
 from weibo_02.items import weibo_user_data
 
