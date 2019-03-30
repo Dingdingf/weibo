@@ -30,10 +30,10 @@ class CookiesMid():
 
     def process_request(self,request,spider):
         Cookies = self._get_random_cookies()
-        proxy = self.get_proxy()
-        retry_count = 5
-        if proxy is  not None:
-            request.proxies = {"http": "http://{}".format(proxy)}
+        # proxy = self.get_proxy()
+        # retry_count = 5
+        # if proxy is  not None:
+        #     request.proxies = {"http": "http://{}".format(proxy)}
         if Cookies:
             request.cookies = Cookies
         else:
